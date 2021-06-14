@@ -1,5 +1,5 @@
 # Hadoop-The-Definitive-Guide
-Hadoop Configuration, Hadoop Management and Hadoop Ecosystem
+Hadoop Configuration, Hadoop Management and Hadoop Ecosystem (Summary of content in the Hadoop The Definitive Guide)
 
 ## Contents
 1. [Using](#using)
@@ -7,12 +7,15 @@ Hadoop Configuration, Hadoop Management and Hadoop Ecosystem
 3. [Hadoop Management Tools](#hadoop-management-tools)
 4. [Hadoop Monitoring](#hadoop-monitoring)
 5. [Hadoop Maintenance](#hadoop-maintenance)
+6. [Avro](#avro)
 
 ----------------------------------------------------------------
 
 ## Using
 1. **OS** - Ubuntu 20.04.1 LTS (VMware)
-2. **BackEnd** - Java (JDK 1.8), **Hadoop(v3.3.0)**
+2. **BackEnd** - **Hadoop(v3.3.0)**, Python (3.9.2), Java (JDK 1.8)
+3. **IDE** - Visual Studio Code, IntelliJ
+4. **etc** - Avro tools (1.10.2)
 
 ----------------------------------------------------------------
 
@@ -487,3 +490,224 @@ Hadoop Configuration, Hadoop Management and Hadoop Ecosystem
                     
                     There are no upgrades in progress
                     ```
+                    
+---------------------------------------------------------------
+                    
+## Avro
+1. 에이브로 (Avro)
+    - 특정 언어에 종속되지 않는 언어 중립적 데이터 직렬화 시스템, 하둡 Writable의 주요 단점인 언어 이식성을 해결하기 위해 만든 프로젝트
+    - 에이브로의 데이터는 다른 시스템과 비슷하게 언어 독립 스키마 (Schema) 로 기술된다. 하지만 다른 시스템과 달리 에이브로에서 코드를 생성하는 것은 선택사항이다. 이것은 작성한 코드가 특정 스키마를 사전에 알지 못하더라도 해당 스키마에 부합하는 데이터를 읽고 쓸 수 있음을 의미한다. 이러한 기능을 제공하기 위해 에이브로는 읽고 쓰는 시점에 스키마가 항상 존재한다고 가정한다. 이렇게 하면 인코드한 값은 필드 식별자로 태깅할 필요가 없어 매우 간결한 인코딩이 가능하다.
+    - 에이브로의 스키마는 보통 JSON으로 작성하며, 데이터는 바이너리 포맷으로 인코딩한다. 물론 다른 선택사항도 있다. 에이브로는 개발자에게 익숙한 C와 유사한 언어로 스키마를 작성할 수 있는 에이브로 IDL이라는 고수준 언어를 제공한다. 또한 사람이 읽기 쉬운 JSON 기반 데이터 인코더도 제공하는데, 에이브로 데이터를 시범적으로 사용하거나 디버깅하는 데 유용하다.
+    - 에이브로는 풍부한 스키마 해석 기능이 있다. 신중하게 정의된 어떠한 제약조건에서도 데이터를 읽는 데 사용되는 스키마와 데이터를 쓰는 데 사용되는 스키마가 같지 않아도 된다. 이것이 바로 에이브로가 제공하는 스키마 변형 메커니즘이다. 예를 들어 과거 데이터를 읽을 때 사용한 스키마에 새로운 필드를 추가할 수 있다. 새로운 사용자와 기존 사용자는 모두 과거의 데이터를 문제없이 읽을 수 있으며, 새로운 사용자는 새로운 필드가 추가된 데이터를 쓸 수 있다. 반대로 기존 사용자는 새로운 데이터를 보게 되는데, 이때 새로운 필드는 적당히 무시하고 기존 데이터 작업처럼 처리할 수 있다.
+2. 에이브로 자료형과 스키마
+    1. 에이브로 기본 자료형
+        | **자료형** | **설명** | **스키마** |
+        |:--------:|:--------:|:--------:|
+        |null|값 없음|"null"|
+        |boolean|바이너리 값|"boolean"|
+        |int|부호 있는 32비트 정수|"int"|
+        |long|부호 있는 64비트 정수|"long"|
+        |float|단정밀도(32비트) IEEE 754 부동소수점 숫자|"float"|
+        |double|배정밀도(64비트) IEEE 754 부동소수점 숫자|"double"|
+        |bytes|순차 8비트 부호 없는 바이트|"bytes"|
+        |string|순차 유니코드 문자|"string"|
+    2. 에이브로 복합 자료형
+        1. array
+            - 순서 있는 객체 집합. 배열의 모든 객체는 동일한 스키마를 가져야 한다.
+            - 스키마 예제
+                ```json
+                {
+                    "type": "array",
+                    "items": "long"
+                }
+                ```
+        2. map
+            - 순서 없는 키-값 쌍의 집합. 키는 반드시 문자열이고, 값은 어떤 자료형도 될 수 있다. 단, 특정 맵의 모든 값은 동일한 스키마를 가져야 한다.
+            - 스키마 예제
+                ```json
+                {
+                    "type": "map",
+                    "values": "string"
+                }
+                ```
+        3. record
+            - 음의의 자료형으로 명명된 필드의 집합
+            - 스키마 예제
+                ```json
+                {
+                    "type": "record",
+                    "name": "WeatherRecord",
+                    "doc": "A weather reading.",
+                    "fields": [
+                        {"name": "year", "type": "int"},
+                        {"name": "temperature", "type": "int"},
+                        {"name": "stationId", "type": "string"}
+                    ]
+                }
+                ```
+        4. enum
+            - 명명된 값의 집합
+            - 스키마 예제
+                ```json
+                {
+                    "type": "enum",
+                    "name": "Cutlery",
+                    "doc": "An eating utensil.",
+                    "symbols": ["KNIFE", "FORK", "SPOON"]
+                }
+                ```
+        5. fixed
+            - 고정길이의 8비트 부호 없는 바이트
+            - 스키마 예제
+                ```json
+                {
+                    "type": "fixed",
+                    "name": "Md5Hash",
+                    "size": 16
+                }
+                ```
+        6. union
+            - 스키마의 유니온. 유니온은 JSON 배열로 표현되며, 배열의 각 요소는 스키마임. 유니온으로 표현되는 데이터는 유니온에 포함된 스키마 중 하나와 반드시 일치해야 한다.
+            - 스키마 예제
+                ```json
+                {
+                    "null",
+                    "string",
+                    {"type": "map", "values": "string"}
+                }
+                ```
+    3. 에이브로 자료형을 표현하는 에이브로 언어 API는 개별 프로그래밍 언어에 따라 다르다. 예를 들어 에이브로의 double 형은 C, C++, 자바에서는 double,로 파이썬에서는 float로 루비에서는 Float로 표현된다.
+    4. 언어별로 하나 이상의 표현이나 매핑이 있을 수 있다.
+        1. 제네릭 매핑 (Generic mapping) : 모든 프로그래밍 언어는 런타임 직전에 스키마를 결정할 수 없을 때 동적 매핑을 사용한다. 자바에서는 이것을 제네릭 메핑이라고 한다.
+        2. 구체적 매핑 (Specific mapping) : 자바와 C++ 구현체는 에이브로 스키마의 데이터를 표현하는 코드를 생성한다. 자바에서는 코드 생성을 구체적 매핑이라고 하며, 데이터를 읽거나 쓰기 전에 스키마의 사본이 있을 때 유용한 최적화 방식이다. 파생 클래스는 제네릭 매핑에 비해 좀 더 도메인 지향적인 API를 제공한다.
+        3. 리플렉트 매핑 (Reflect mapping) : 자바는 리플렉션을 이용하여 에이브로 자료형을 기존의 자바 자료형으로 매핑하는 리플렉트 매핑을 지원한다. 리플렉트 매핑은 제네릭이나 구체적 매핑에 비해 느리지만 에이브로가 자동으로 스키마를 유추하기 떄문에 자료형을 쉽게 정의할 수 있는 장점이 있다.
+    5. 에이브로 자바 자료형 매핑 (에이브로-제네릭-구체적-리플렉트)
+        - 표에서 구체적 매핑에 별다른 명시가 없으면 제네릭과 동일하고, 리플렉트 매핑에 별다른 명시가 없으면 구체적 매핑과 동일하다. (org.apache.avro 아래에 ${o.a.a} 축약형으로 표기)
+            | **에이브로 자료형** | **제네릭 자바 매핑** | **구체적 자바 매핑** | **리플렉트 자바 매핑** |
+            |:--------:|:--------:|:--------:|:--------:|
+            |null|null type|||
+            |boolean|Boolean|||
+            |int|int||byte, short, int 또는 char|
+            |long|long|||
+            |float|float|||
+            |double|double|||
+            |bytes|java.nio.ByteBuffer||byte의 배열|
+            |string|${o.a.a}.util.Utf8 또는 java.lang.String||java.lang.String|
+            |array|${o.a.a}.generic.GenericArray||Array 또는 java.util.Collection|
+            |map|java.util.Map|||
+            |record|${o.a.a}.generic.GenericRecord|${o.a.a}.specific.SpecificRecord|인자 없는 생성자를 갖는 임의의 사용자 클래스. 상속받은 모든 영구 인스턴스 필드가 사용됨.|
+            |enum|java.lang.String|생성된 자바 열거형|임의의 자바 열거형|
+            |fixed|${o.a.a}.generic.GenericFixed|${o.a.a}.specific.SpecificFixed|${o.a.a}.generic.GenericFixed|
+            |union|java.lang.Object|||
+3. 스키마 해석
+    - 에이브로는 기록할 때 사용한 writer의 스키마와 다른 reader의 스키마를 이용하여 데이터를 다시 읽을 수 있다. 이는 스키마 변경을 가능하게 하는 강력한 기능이다. description 필드가 추가된 문자열 쌍에 대한 새로운 스키마를 고려해보자.
+    - writer 스키마
+        ```json
+        {
+            "type": "record",
+            "name": "StringPair",
+            "doc": "A pair of strings.",
+            "fields": [
+                {"name": "left", "type": "string"},
+                {"name": "right", "type": "string"}
+            ]
+        }
+        ```
+    - reader 스키마
+        ```json
+        {
+            "type": "record",
+            "name": "StringPair",
+            "doc": "A pair of strings with an added field",
+            "fields": [
+                {"name": "left", "type": "string"},
+                {"name": "right", "type": "string"},
+                {"name": "description", "type": "string", "default": ""}
+            ]
+        }
+        ```
+    - description 필드에 기본값 (빈 문자열)을 부여했기 때문에 이 스키마를 이용하여 이전에 직렬화했던 데이터를 읽을 수 있다. 에이브로는 읽고 있는 레코드에 필드에 대한 정의가 없다면 기본값을 사용한다. default 속성을 생략하면 이전 데이터를 읽을 때 에러가 발생한다.
+    - 기본값을 빈 문자열이 아닌 null 값으로 하려면 description 필드를 null 에이브로 자료형을 갖는 유니온 (union)으로 정의한다.
+        ```json
+        {"name": "description", "type": ["null", "string"], "default": null}
+        ```
+    - 레코드 스키마 해석
+        |Writer|Reader|동작|
+        |:--------:|:--------:|:--------:|
+        |기존|추가된 필드|Writer가 기록한 필드가 아니므로 reader는 신규 필드의 기본값을 이용한다.|
+        |추가된 필드|기존|reader는 writer가 기록한 신규 필드를 모르기 때문에 신규 필드를 무시한다.|
+        |기존|제거된 필드|reader는 삭제된 필드를 무시한다.|
+        |제거된 필드|기존|writer는 제거된 필드를 기록하지 않는다. 이전 스키마가 해당 필드에 대해 정의된 기본값을 갖는다면 reader는 이 필드를 사용하고, 그렇지 않으면 오류가 발생한다. 이러한 사례에서는 reader의 스키마를 writer의 스키마와 같거나 이전 시점으로 갱신하는 것이 최선이다.|
+4. 정렬 순서
+    - 에이브로는 객체의 정렬 순서를 정의할 수 있따. 대부분의 에이브로 객체의 정렬 순서는 우리가 예상하는 방식과 같다. 예를 들어 수치형은 오름차순으로 값을 정렬한다. 다른 자료형은 좀 더 정교한데, 예를 들어 열거형 (enum)은 심벌 문자열의 값이 아닌 해당 심벌이 정의된 순서를 기준으로 정렬된다.
+    - 에이브로 명세에는 record를 제외한 모든 자료형에 대한 정렬 순서가 이미 정해져 있다. 정렬 순서는 사용자가 변경할 수 없다. 하지만 레코드는 필드에 order 속성을 명시하는 방법으로 정렬 순서를 제어할 수 있다. 이것은 오름차순(기본), 내림차순(역순), 무시(비교할 때 제외되는 필드) 세 가지 값 중 하나를 가진다.
+    - 예를 들어 다음 스키마는 StringPair 레코드의 순서를 right 필드의 내림차순으로 정의한다.
+        ```json
+        {
+            "type": "record",
+            "name": "StringPair",
+            "doc": "A pair of strings, sorted by right field descending.",
+            "fields": [
+                {"name": "left", "type": "string", "order": "ignore"},
+                {"name": "right", "type": "string", "order": "descending"}
+            ]
+        }
+        ```
+    - 다음 스키마는 우선 right 필드로 정렬하고 그 다음에 left 필드로 정렬한다.
+        ```json
+        {
+            "type": "record",
+            "name": "StringPair",
+            "doc": "A pair of strings, sorted by right then left.",
+            "fields": [
+                {"name": "right", "type": "string"},
+                {"name": "left", "type": "string"}
+            ]
+        }
+        ```
+5. 상호 운영성
+    - **Detailed Code** : can be found in each directory.
+    - 에이브로는 언어 상호 운영성을 지원한다. 즉, 하나의 언어(파이썬)를 이용하여 데이터 파일을 기록하고 다른 언어(자바)로 읽는 것이 가능하다.
+    - 코드 진행
+        1. 표준 입력에서 콤마로 구분된 문자열을 읽고 그것을 에이브로 데이터 파일에 StringPair 레코드로 기록한다. 데이터 파일을 기록하는 자바 코드와 비슷하게 DatumWriter와 DataFileWriter 객체를 생성했다. 파일에서 스키마를 읽는 것은 갖지만, 코드 안에 에이브로 스키마를 내장하였다.
+        2. 파이썬은 에이브로 레코드를 사전으로 표현한다. 표준 입력에서 읽은 각 행은 dict 객체로 변환되고 DataFileWriter에 추가된다.
+        3. 프로그램을 실행하기 전에 파이썬용 에이브로를 설치해야 한다. (VSCode Terminal)
+            ```bash
+            > pip install avro
+            ```
+        4. 프로그램을 실행하기 위해 출력할 파일의 이름을 (byPython.avro) 지정하고 표준 입력으로 입력 데이터 쌍을 보낸다.
+            <p align="center">
+                <img src = "Images/avro1.png", width="100%">
+            </p>
+        5. 자바로 작성된 에이브로 도구([다운](https://mirror.navercorp.com/apache/avro/))를 사용하여 byPython.avro의 내용을 출력한다. tojson 명령어는 에이브로 데이터 파일을 JSON으로 변환하고 콘솔에 출력한다.
+            <p align="center">
+                <img src = "Images/avro2.png", width="100%">
+            </p>
+6. 에이브로 맵리듀스
+    - **Detailed Code** : can be found in each directory.
+    - 에이브로는 다수의 클래스를 제공하므로 에이브로 데이터로 맵리듀스 프로그램을 쉽게 실행할 수 있다. 여기서는 org.apache.avro.mapreduce 패키지의 새로운 맵리듀스 API 클래스를 사용한다.
+    - 날씨 레코드는 다음과 같은 스키마로 표현할 수 있다.
+        ```json
+        {
+            "type": "record",
+            "name": "WeatherRecord",
+            "doc": "A weather reading",
+            "fields": [
+                {"name": "year", "type": "int"},
+                {"name": "temperature", "type": "int"},
+                {"name": "stationId", "type": "string"}
+            ]
+        }
+        ```
+    - 코드(AvroGenericMaxTemperature)는 텍스트 입력을 읽어서 날씨 레코드를 포함한 에이브로 데이터 파일을 만든다. 이 프로그램은 에이브로의 제네릭 매핑을 사용한다.
+    - 에이브로 맵리듀스 API와 일반 하둡 맵리듀스 API의 차이점
+        1. 에이브로 자바 자료형에 맞는 래퍼를 사용한다.
+            - 이 맵리듀스 프로그램에서 키는 연도(정수), 값은 에이브로의 GenericRecord로 표현된 날씨 레코드다. 이 키와 값은 맵 출력(그리고 리듀스 입력)에서 키 자료형은 AvroKey&lt;Integer&gt;로, 값 자료형은 AvroValue&lt;GenericRecord&gt;로 변환된다.
+        2. 잡을 설정하는 데 AvroJob 클래스를 사용한다.
+            - AvroJob 클래스는 입력, 맵 출력, 최종 출력 데이터에 대한 에이브로 스키마를 정의하는 데 편리하다. 이 프로그램에서는 텍스트 파일에서 데이터를 읽기 때문에 입력 스키마는 설정하지 않았다. 맵 출력키 스키마는 에이브로 정수며, 값 스키마는 날씨 레코드 스키마다. 최종 출력 스키마는 날씨 레코드의 스키마며, 출력 포맷은 키를 에이브로 데이터 파일에 기록하고 값은 무시하는(NullWritable) AvroKeyOutputFormat이다.
+7. 에이브로 맵리듀스를 이용한 정렬
+    - 여기서는 에이브로의 제네릭 매핑을 사용하기 때문에 어떤 코드도 생성할 필요가 없다. 또한 자바에서 제네릭 자료형 매개변수인 K로 표현되는 모든 종류의 에이브로 레코드를 정렬할 수 있다.
+    - 키와 같은 값을 선택해서 값이 키로 그룹핑되었을 때 그 값 중 하나 이상이 같은 키를 공유한다면 (정렬 함수에 의해) 어떤 레코드도 잃어버리지 않고 모든 값을 내보낼 수 있다.
+    - 매퍼는 단순히 입력키를 AvroKey와 AvroValue로 랩핑하여 내보낸다.
+    - 리듀서는 아이덴티티 리듀서처럼 동작하며, 값을 출력키로 전달하여 에이브로 데이터 파일에 기록한다.
+    - 정렬은 맵리듀스 셔플 과정에서 일어나며, 정렬 기능은 프로그램에 전달된 에이브로의 스키마에 의해 정해진다.

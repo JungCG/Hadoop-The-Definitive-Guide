@@ -7,15 +7,16 @@ Hadoop Configuration, Hadoop Management and Hadoop Ecosystem (Summary of content
 3. [Hadoop Management Tools](#hadoop-management-tools)
 4. [Hadoop Monitoring](#hadoop-monitoring)
 5. [Hadoop Maintenance](#hadoop-maintenance)
-6. [Avro](#avro)
+6. [Apache Avro](#apache-avro)
+7. [Apache Flume](#apache-flume)
 
 ----------------------------------------------------------------
 
 ## Using
 1. **OS** - Ubuntu 20.04.1 LTS (VMware)
-2. **BackEnd** - **Hadoop(v3.3.0)**, Python (3.9.2), Java (JDK 1.8)
+2. **BackEnd** - **Hadoop(v3.3.0)**, Python (v3.9.2), Java (JDK 1.8)
 3. **IDE** - Visual Studio Code, IntelliJ
-4. **etc** - Avro tools (1.10.2)
+4. **etc** - Avro tools (v1.10.2), Apache Flume (v1.9.0)
 
 ----------------------------------------------------------------
 
@@ -493,7 +494,7 @@ Hadoop Configuration, Hadoop Management and Hadoop Ecosystem (Summary of content
                     
 ---------------------------------------------------------------
                     
-## Avro
+## Apache Avro
 1. 에이브로 (Avro)
     - 특정 언어에 종속되지 않는 언어 중립적 데이터 직렬화 시스템, 하둡 Writable의 주요 단점인 언어 이식성을 해결하기 위해 만든 프로젝트
     - 에이브로의 데이터는 다른 시스템과 비슷하게 언어 독립 스키마 (Schema) 로 기술된다. 하지만 다른 시스템과 달리 에이브로에서 코드를 생성하는 것은 선택사항이다. 이것은 작성한 코드가 특정 스키마를 사전에 알지 못하더라도 해당 스키마에 부합하는 데이터를 읽고 쓸 수 있음을 의미한다. 이러한 기능을 제공하기 위해 에이브로는 읽고 쓰는 시점에 스키마가 항상 존재한다고 가정한다. 이렇게 하면 인코드한 값은 필드 식별자로 태깅할 필요가 없어 매우 간결한 인코딩이 가능하다.
@@ -639,7 +640,7 @@ Hadoop Configuration, Hadoop Management and Hadoop Ecosystem (Summary of content
         |기존|제거된 필드|reader는 삭제된 필드를 무시한다.|
         |제거된 필드|기존|writer는 제거된 필드를 기록하지 않는다. 이전 스키마가 해당 필드에 대해 정의된 기본값을 갖는다면 reader는 이 필드를 사용하고, 그렇지 않으면 오류가 발생한다. 이러한 사례에서는 reader의 스키마를 writer의 스키마와 같거나 이전 시점으로 갱신하는 것이 최선이다.|
 4. 정렬 순서
-    - 에이브로는 객체의 정렬 순서를 정의할 수 있따. 대부분의 에이브로 객체의 정렬 순서는 우리가 예상하는 방식과 같다. 예를 들어 수치형은 오름차순으로 값을 정렬한다. 다른 자료형은 좀 더 정교한데, 예를 들어 열거형 (enum)은 심벌 문자열의 값이 아닌 해당 심벌이 정의된 순서를 기준으로 정렬된다.
+    - 에이브로는 객체의 정렬 순서를 정의할 수 있다. 대부분의 에이브로 객체의 정렬 순서는 우리가 예상하는 방식과 같다. 예를 들어 수치형은 오름차순으로 값을 정렬한다. 다른 자료형은 좀 더 정교한데, 예를 들어 열거형 (enum)은 심벌 문자열의 값이 아닌 해당 심벌이 정의된 순서를 기준으로 정렬된다.
     - 에이브로 명세에는 record를 제외한 모든 자료형에 대한 정렬 순서가 이미 정해져 있다. 정렬 순서는 사용자가 변경할 수 없다. 하지만 레코드는 필드에 order 속성을 명시하는 방법으로 정렬 순서를 제어할 수 있다. 이것은 오름차순(기본), 내림차순(역순), 무시(비교할 때 제외되는 필드) 세 가지 값 중 하나를 가진다.
     - 예를 들어 다음 스키마는 StringPair 레코드의 순서를 right 필드의 내림차순으로 정의한다.
         ```json
@@ -711,3 +712,315 @@ Hadoop Configuration, Hadoop Management and Hadoop Ecosystem (Summary of content
     - 매퍼는 단순히 입력키를 AvroKey와 AvroValue로 랩핑하여 내보낸다.
     - 리듀서는 아이덴티티 리듀서처럼 동작하며, 값을 출력키로 전달하여 에이브로 데이터 파일에 기록한다.
     - 정렬은 맵리듀스 셔플 과정에서 일어나며, 정렬 기능은 프로그램에 전달된 에이브로의 스키마에 의해 정해진다.
+    
+---------------------------------------------------------------
+                    
+## Apache Flume
+1. 플룸
+    - 이벤트 기반의 대용량 데이터를 하둡으로 수집하기 위해 개발
+    - 다수의 웹 서버에서 로그파일을 수집하고 해당 파일의 로그 이벤트를 처리하기 위해 HDFS에 위치한 새로운 통합 파일로 옮기는 것은 플룸을 사용하는 전형적인 예다.
+    - 일반적인 최종 목적지 (또는 플룸의 싱크)는 HDFS지만 플룸은 HBase나 솔라와 같은 다른 시스템에도 이벤트를 기록할 수 있다.
+    - 플룸을 사용하려면 플룸 에이전트 (agent)를 실행해야 한다. 플룸 에이전트는 채널(channel)로 연결된 소스(source)와 싱크(sink)를 실행하는 장기 실행 자바 프로세스다. 플룸에서 소스는 이벤트를 만들고 이를 채널로 전달한다. 채널은 싱크로 전송할 때까지 이벤트를 저장한다. 소스-채널-싱크의 조합이 플룸의 기본 구성요소 (building block)다.
+    - 플룸은 분산형 토폴로지에서 실행되는 연결된 에이전트의 집합으로 구성된다. 시스템의 가장자리에 있는 에이전트 (웹 서버에서 실행되는)는 데이터를 수집한 다음 이를 집계하는 에이전트로 전송하고 마지막으로 최종 목적지에 데이터를 저장한다. 이를 위해서는 각 에이전트에 특정 소스와 싱크의 집합이 실행되도록 설정해야 한다. 따라서 플룸을 사용할 때 핵심은 개별 요소가 함께 유기적으로 동작할 수 있도록 설정하는 것이다.
+2. 플룸 설치 [다운](http://flume.apache.org/download.html)
+    - 다운로드 후 적절한 위치에 타르볼을 푼다.
+        ```bash
+        % tar xzf apache-flume-x.y.z-bin.tar.gz
+        ```
+    - 플룸 바이너리 경로를 환경변수인 PATH에 추가한다.
+        ```bash
+        % export FLUME_HOME=~/(특정 디렉토리)/apache-flume-x.y.z-bin
+        % export PATH=$PATH:$FLUME_HOME/bin
+        ```
+    - 플룸 에이전트는 flume-ng 명령으로 시작할 수 있다.
+3. 사용법 예제
+    1. 자바 속성 파일을 사용해서 설정된 단일 소스-채널-싱크를 실행한다. 설정은 사용할 소스, 싱크, 채널의 종류와 그들의 연결 방법을 제어한다.
+        - spool-to-logger.properties
+            ```
+            agent1.sources = source1
+            agent1.sinks = sink1
+            agent1.channels = channel1
+
+            agent1.sources.source1.channels = channel1
+            agent1.sinks.sink1.channel = channel1
+
+            agent1.sources.source1.type = spooldir
+            agent1.sources.source1.spoolDir = /tmp/spooldir
+
+            agent1.sinks.sink1.type = logger
+
+            agent1.channels.channel1.type = file
+            ```
+        - 속성 이름은 최상위 수준인 에이전트 이름을 시작으로 계층적으로 구성된다. 예제에는 agent1이라는 단일 에이전트만 있다. 에이전트의 다른 구성요소의 이름은 그 다음 수준에서 정의한다. 예제의 agent1.sources에는 agent1에서 실행될 소스의 이름을 나열한다. (여기서는 단일 소스인 source1) 이와 비슷하게 agent1은 싱크(sink1)와 채널(channel1)을 하나씩 갖는다.
+        - 각 컴포넌트의 속성은 계층의 다음 수준에서 정의한다. 컴포넌트에서 사용할 수 있는 설정 속성은 컴포넌트의 종류에 따라 다르다. 이 예제에서는 agent1.sources.source1.type을 spooldir로 설정했다. spooldir는 새로운 파일의 전송을 위해 스풀링 디렉터리를 검사하는 스풀링 디렉터리 소스다. spoolDir 속성에 스풀링 디렉터리 소스를 지정한다. 따라서 source1의 전체 키는 agent1.sources.source1.spoolDir다. 소스의 채널로는 agent1.sources.source1.channels를 지정했다.
+        - 예제의 싱크는 콘솔에 이벤트를 기록하는 로거 싱크(logger sink)다. 싱크는 반드시 채널과 연결되어야 한다. (agent1.sinks.sink1.channel 속성으로) 파일 채널을 사용하면 채널의 이벤트를 디스크에 저장하기 때문에 지속성을 보장할 수 있다.
+        - 실행하기 전에 로컬 파일시스템에 반드시 스풀링 디렉터리를 만들어야 한다.
+            ```bash
+            % mkdir /tmp/spooldir
+            ```
+        - 그 다음 플룸 에이전트를 시작한다.
+            ```bash
+            % flume-ng agent --conf-file spool-to-logger.properties --name agent1 --conf $FLUME_HOME/conf --Dflume.root.logger=INFO,console
+            ```
+        - 플룸 속성 파일은 --conf-file 플래그로 지정한다. 에이전트 이름은 반드시 --name으로 전달해야 한다. (플룸 속성 파일은 다수의 에이전트를 정의할 수 있기 때문에 어떤 것을 실행할 것인지 알려줘야 한다.) --conf 플래그에는 환경 설정과 같은 일반적인 설정의 위치를 지정한다.
+        - 새로운 터미널을 열고 스풀링 디렉터리에 파일을 하나 생성한다. 스풀링 디렉터리 소스는 이 파일의 내용이 절대 변경되지 않을 것으로 예상한다. 일부분만 쓰여진 파일을 소스가 읽어가는 것을 방지하기 위해 일단 숨김 파일에 전체 내용을 기록한다. 그 다음에 소스가 읽을 수 있도록 파일명을 변경한다.
+            ```bash
+            % echo "Hello Flume" > /tmp/spooldir/.file1.txt
+            % mv /tmp/spooldir/.file1.txt /tmp/spooldir/file1.txt
+            ```
+        - 에이전트를 실행한 터미널로 돌아와서 플룸이 이 파일을 감지하고 처리한 것을 직접 확인한다.
+            <p align="center">
+                <img src = "Images/flume1.png", width="100%">
+            </p>
+        - 스풀링 디렉터리 소스는 파일을 행으로 나누고 각 행마다 플룸 이벤트를 생성하는 방식으로 데이터를 수집한다. 이벤트는 선택사항인 헤더와 텍스트 행을 UTF-8ㄹ 표현한 바이너리 본문으로 되어 있다. 로거 싱크는 본문을 16진수와 문자열 형태로 기록한다. 스풀링 디렉터리에 놓아둔 파일은 오직 한 행만 가지므로 하나의 이벤트만 기록된다. 또한 소스가 파일의 이름을 file1.txt.COMPLETED로 변경한 것을 확인할 수 있는데, 이렇게 하면 플룸이 처리를 완료했음을 가리키고 이미 처리를 완료한 파일은 다시 접근할 수 없게 된다.
+4. 트랜잭션과 신뢰성
+    1. 트랜잭션
+        - 플룸은 소스에서 채널까지와 채널에서 싱크까지의 전송을 보장하기 위해 분리된 트랜잭션을 사용한다. 위의 예제에서 스풀링 디렉터리 소스는 파일의 각 행마다 이벤트를 생성한다. 이벤트를 채널로 전송하는 캡슐화 트랜잭션이 성공적으로 커밋된 후에만 소스는 파일을 '완료'로 표시한다.
+        - 비슷하게, 채널에서 싱크로 이벤트를 전송할 때도 트랜잭션이 사용된다. 만약 예상치 못한 오류로 이벤트를 기록할 수 없다면 트랜잭션은 롤백 (Roll back)되고 해당 이벤트는 나중에 다시 전송할 수 있도록 그대로 채널에 남게 된다.
+        - 위에서 사용하고 있는 채널은 파일 채널(file channel)로 지속성이 있다. 이벤트가 일단 채널에 기록되면 에이전트가 재시작하더라도 해당 이벤트는 유실되지 않는다. 플룸은 또한 메모리 채널 (memory channel)도 제공한다. 이벤트는 메모리에 저장되기 때문에 메모리 채널은 지속성이 없다. 메모리 채널 방식을 사용할 때 에이전트가 재시작하면 해당 이벤트는 유실된다. 메모리 채널은 이런 방식이 허용되는 애플리케이션만 사용해야 한다. 메모리 채널은 파일 채널에 비해 높은 처리량을 가지므로 서로 트레이드오프 관계에 있다.
+    2. 신뢰성
+        - 파일 채널 방식을 이용하면 소스가 생성한 모든 이벤트가 최종적으로 싱크에 도착하게 되는 전체적인 효과를 얻을 수 있다. 여기서 주의해야 할 사항은 모든 이벤트는 싱크에 적어도 한번 (least once)은 도착하게 된다는 것이다. 즉, 중복 전송 가능성이 있다. 중복은 소스 또는 싱크에서 모두 발생할 수 있다. 예를 들어 에이전트가 재시작된 후 스풀링 디렉터리 소스는 예전에 채널로 일부 또는 전부가 커밋되었더라도 전송이 완료되지 않은 파일의 이벤트는 다시 전송한다. 로거 싱크 또한 에이전트가 재시작되면 기록은 성공했지만 커밋되지 않은 이벤트를 다시 기록한다. (만약 에이전트가 채널과 싱크 작업 중간에 종료되었다면 이러한 일이 발생할 수 있다.)
+        - 적어도 한번이라는 시맨틱은 한계처럼 보일 수 있으나 현실에서는 성능을 위해 받아들일 수밖에 없는 타협안이다. 더 엄격한 정확히 한번 (exactly once) 시맨틱은 고비용의 두 단계 커밋 프로토콜이 필요하다. 이 선택은 대용량 병렬 이벤트 수집 시스템인 플룸 (적어도 한번 시맨틱)과 전통적인 기업형 메시징 시스템 (정확히 한번 시맨틱)과의 차이점이다. 적어도 한번 시맨틱에서 중복된 이벤트는 이후 데이터 처리 파이프라인에서 제거할 수 있다. 맵리듀스 또한 하이브로 애플리케이션에 적합한 중복 제거 잡을 작성하면 된다.
+    3. 배치
+        - 효율성을 위해 플룸은 각 트랜잭션에서 이벤트를 한 건씩 처리하기보다는 가능하다면 배치로 처리하려고 한다. 모든 트랜잭션은 로컬 디스크 쓰기와 fsync 호출이 필요하므로 배치로 처리하면 파일 채널의 성능을 크게 높일 수 있다.
+        - 배치 크기는 해당 컴포넌트에 따라 다르며 다양한 설정이 가능하다. 예를 들어 스풀링 디렉터리 소스는 100행 단위로 파일을 읽는다. (batchSize 속성으로 변경 가능) 이와 유사하게 에이브로 싱크는 RPC를 통해 이벤트를 보내기 전에 채널에서 100개의 이벤트를 읽으려 시도한다. 물론 그보다 적어도 차단하지는 않는다.
+5. HDFS 싱크
+    - 플룸의 핵심은 대량의 데이터를 하둡 데이터 저장소에 전달하는 것이다.
+    - 아래 설정은 위의 예제를 HDFS 싱크를 사용하기 위해 수정한 것이다. 변경해야 하는 두 개의 설정은 싱크의 종류 (hdfs)와 파일이 위치할 디렉터리를 지정하는 hdfs.path다. (예제에서처럼 경로에 파일시스템을 명시하지 않으면 일반적으로 하둡의 fs.defaultFS 속성을 따른다) 중요한 파일 접두사나 접미사도 지정할 수 있으며, 이벤트를 텍스트 포멧으로 쓰게 할 수도 있다.
+    - spool-to-hdfs.properties
+        ```
+        agent1.sources = source1
+        agent1.sinks = sink1
+        agent1.channels = channel1
+
+        agent1.sources.source1.channels = channel1
+        agent1.sinks.sink1.channel = channel1
+
+        agent1.sources.source1.type = spooldir
+        agent1.sources.source1.spoolDir = /tmp/spooldir
+
+        agent1.sinks.sink1.type = hdfs
+        agent1.sinks.sink1.hdfs.path = /tmp/flume
+        agent1.sinks.sink1.hdfs.filePrefix = events
+        agent1.sinks.sink1.hdfs.fileSuffix = .log
+        agent1.sinks.sink1.hdfs.inUsePrefix = _
+        agent1.sinks.sink1.hdfs.fileType = DataStream
+
+        agent1.channels.channel1.type = file
+        ```
+    - 위 설정을 적용하기 위해 에이전트를 다시 시작한 후 스풀링 디렉터리에 새로운 파일을 만든다.
+        ```bash
+        % echo -e "Hello\nAgain" > /tmp/spooldir/.file2.txt
+        % mv /tmp/spooldir/.file2.txt /tmp/spooldir/file2.txt
+        ```
+    - 이제 이벤트는 HDFS 싱크로 전송되고 파일에 기록될 것이다. 기록 중인 파일은 아직 완료되지 않았다는 것을 보여주기 위해 파일명에 .tmp 접미사가 붙는다. 예제에서는 hdfs.inUsePrefix 속성을 _로 설정해서 기록되고 있는 파일명 앞에 접두사를 추가했다. 맵리듀스는 언더스코어 접두사가 있는 파일은 무시한다. 따라서 전형적인 임시 파일명은 _events.xxxxxxxx.log.tmp와 같은 형태가 될 것이다. 여기서 숫자는 HDFS 싱크가 생성한 타임스탬프 값이다.
+    - HDFS 싱크는 지정된 시간 (기본은 30초, hdfs.rollInterval 속성으로 제어), 크기 (기본은 1024바이트, hdfs.rollSize로 설정), 이벤트의 개수 (기본은 10개, hdfs.rollCount로 설정) 중 어느 하나를 만족할 때까지 파일을 열린 상태로 유지한다. 만약 상기의 기준 중 어떤 것이라도 충족되면 파일은 닫히고 사용된 접두사와 접미사는 제거된다. 새로운 이벤트는 새로운 파일에 기록된다.
+    - hdfs.proxyUser 속성을 설정하지 않았다면 HDFS 싱크는 플룸 에이전트를 실행하는 사용자의 계정으로 파일을 기록한다. hdfs.proxyUser 속성을 설정했다면 지정된 사용자 계정으로 파일을 기록한다.
+6. 파티셔닝과 인터셉터
+    - 대량의 데이터셋은 자주 파티션으로 구조화된다. 파티션을 사용하면 데이터의 일부만 질의할 때 특정 파티션에 국한된 데이터 처리가 가능하다. 플룸 이벤트 데이터는 주로 시간을 기준으로 파티셔닝된다. 프로세스를 주기적으로 실행하여 완료된 파티션으로 변환할 수 있다.
+    - 시간 포맷 확장 문자열을 사용한 서브디렉터리가 포함되도록 hdfs.path 속성을 설정하면 파티션에 데이터를 저장할 수 있게 간단히 변경할 수 있다.
+        ```
+        agent1.sinks.sink1.hdfs.path = /tmp/flume/year=%Y/month=%m/day=%d
+        ```
+    - 플룸 이벤트가 기록될 파티션은 이벤트의 timestamp 헤더로 결정된다. 이벤트는 기본적으로 이런 헤더가 없지만 플룸 인터셉터(interceptor)를 사용하면 추가할 수 있다. 인터셉터는 전송 중인 이벤트의 내용을 수정하거나 삭제할 수 있는 컴포넌트다. 인터셉터는 소스에 달려 있으며, 이벤트가 채널에 도착하기 전에 실행된다. 소스에서 생성되는 모든 이벤트에 timestamp 헤더를 추가하기 위해서는 다음과 같이 source1에 타임스탬프 인터셉터를 추가하는 설정을 하면 된다.
+        ```
+        agent1.sources.source1.interceptors = interceptor1
+        agent1.sources.source1.interceptors.interceptor1.type = timestamp
+        ```
+    - 타임스탬프 인터셉터를 사용하면 이벤트가 생성된 시점과 가까운 타임스탬프를 반영할 수 있다. 일부 애플리케이션에서는 이러한 타임스탬프만 사용해도 이벤트가 언제 HDFS에 기록되었는지 알 수 있다. 하지만 플룸 에이저트를 다중 계층으로 구성하면 장애가 발생했을 때 이벤트의 생성 시간과 기록 시간 사이에는 큰 차이가 있을 수 있다는 점을 명심해야 한다. 이런 사례에서는 HDFS 싱크를 hdfs.useLocalTimeStamp로 설정해서 HDFS 싱크를 실행하는 플룸 에어전트가 생성한 타임스탬프를 사용하는 것이 좋다.
+7. 파일 포맷
+    - 데이터를 저장할 때는 바이너리 포맷을 사용하는 것이 좋다. 텍스트 파일을 사용할 때보다 최종 파일의 크기가 더 작아지기 때문이다. HDFS 싱크 파일 포맷은 hdfs.fileType 속성과 일부 다른 속성의 조합으로 제어된다.
+    - hdfs.fileType 속성을 지정하지 않으면 이 속성은 기본값인 SequenceFile로 설정된다. 이는 이벤트를 이벤트 타임스탬프 (timestamp 헤더가 없으면 현재 시간)를 포함한 LongWritable 키와 이벤트 본문을 포함한 BytesWritable 값으로 시퀀스 파일에 쓴다. hdfs.writeFormat 속성을 Text로 설정하면 BytesWritable 대신 Text Writable 값을 사용하여 시퀀스 파일을 사용할 수 있다.
+    - 에이브로 파일의 설정은 조금 다르다. hdfs.fileType 속성을 일반 텍스트와 같이 DataStream으로 설정한다. 추가로 serializer를 반드시 avro_event로 지정해야 한다. 압축을 위해서는 serializer.compressionCodec 속성에 원하는 압출 방식을 설정하면 된다. 아래의 설정은 HDFS 싱크에 스내피 (snappy)로 압축된 에이브로 파일을 쓰도록 설정한 것이다.
+        ```
+        agent1.sinks.sink1.type = hdfs
+        agent1.sinks.sink1.hdfs.path = /tmp/flume
+        agent1.sinks.sink1.hdfs.filePrefix = events
+        agent1.sinks.sink1.hdfs.fileSuffix = .avro
+        agent1.sinks.sink1.hdfs.fileType = DataStream
+        agent1.sinks.sink1.serializer = avro_event
+        agent1.sinks.sink1.serializer.compressionCodec = snappy
+        ```
+    - 이벤트는 두 개의 필드로 된 에이브로 레코드로 표현된다. headers는 문자열 값의 에이브로 맵이고 body는 에이브로 바이트 필드다.
+8. 분기 (fan out)
+    - 분기는 하나의 소스에서 발생하는 이벤트를 여러 개의 채널로 전송하는 것을 뜻하는 용어다. 그 결과 여러 개의 싱크에 동일한 이벤트가 도착한다. 다음 설정은 이벤트를 HDFS 싱크와 로거 싱크 두 곳에 전송한다.
+        ```
+        agent1.sources = source1
+        agent1.sinks = sink1a sink1b
+        agent1.channels = channel1a channel1b
+        
+        agent1.sources.source1.channels = channel1a channel1b
+        agent1.sinks.sink1a.channel = channel1a
+        agent1.sinks.sink1b.channel = channel1b
+        
+        agent1.sources.source1.type = spooldir
+        agent1.sources.source1.spoolDir = /tmp/spooldir
+        
+        agent1.sinks.sink1a.type = hdfs
+        agent1.sinks.sink1a.hdfs.path = tmp/flume
+        agent1.sinks.sink1a.hdfs.filePrefix = events
+        agent1.sinks.sink1a.hdfs.fileSuffix = .log
+        agent1.sinks.sink1a.hdfs.fileType = DataStream
+        
+        agent1.sinks.sink1b.type = logger
+        
+        agent1.channels.channel1a.type = file
+        agent1.channels.channel1b.type = memory
+        ```
+    - 가장 중요한 변경사항은 agent1.sources.source1.channels 속성을 공란으로 구분된 패널 이름 목록으로 설정하여 이벤트를 여러 개의 채널로 전송하게 소스를 설정했다는 점이다. 여기서 로거 싱크에 데이터를 전달하는 채널은 메미로 채널이다. 디버깅 목적의 이벤트 저장은 에이전트의 재시작으로 이벤트를 유실해도 문제가 없다. 물론 각 채널은 앞에 나온 예제와 같이 하나의 싱크에 데이터를 전달하도록 설정했다.
+    - 전송 보장
+        - 플룸은 각 배치 이벤트를 스풀링 디렉터리 소스에서 각 채널로 전송하기 위해 별도의 트랜잭션을 사용한다. 예제에서는 HDFS 싱크로 가는 패널에 이벤트를 전송하기 위해 트랜잭션을 하나 사용했고, 동일한 배치 이벤트를 로거 싱크를 위한 채널에 전송하기 위해 다른 트랜잭션을 사용했다. 두 트랜잭션 중 어느 하나가 실패하면 소스에 남아 있는 이벤트는 제거되지 않고 나중에 다시 전송을 시도할 것이다.
+        - 이 사례에서는 일부 이벤트가 로거 싱크로 전송되지 않아도 괜찮기 때문에 해당 채널을 선택적 채널로 지정했다. 이 채널과 관련된 트랜잭션이 실패하면 소스에 이벤트가 남아 있어도 재전송되지 않는다. (양쪽 채널 트랜잭션이 모두 커밋되기 전에 에이전트가 실패하면 해당 이벤트는 에이전트가 다시 가동되면 재전송될 것이다. 커밋되지 않은 채널은 선택사항으로 표시했더라도 이러한 방식이 자동으로 적용된다는 점을 주의해야 한다.) 선택적 채널을 사용하기 위해서는 소스의 selector.optional 속성에 공백으로 구분된 채널 목록을 설정하면 된다.
+            ```
+            agent1.sources.source1.selector.optional = channel1b
+            ```
+9. 분배 : 에이전트 계층
+    - 여러 노드의 플룸 이벤트를 모으려면 플룸 에이전트 계층(tier)을 구성해야 한다. 첫 번째 계층에서는 웹서버와 같은 원천 소스에서 이벤트를 수집한다. 그리고 그것을 두 번째 계층에 있는 소수의 에이전트로 전송한다. 두 번째 계층에서는 첫 번째 계층에서 받은 이벤트를 모두 모은 후 HDFS에 쓴다. 소스 노드가 매우 많으면 더 많은 계층으로 확장해야 한다.
+    - 계층은 네티워크에 이벤트를 전송하는 싱크와 이벤트를 받는 관련 소스로 구성된다. 에이브로 싱크는 에이브로 RPC 방식으로 다른 플룸 에이전트에서 실행 중인 에이브로 소스로 이벤트를 보낸다. 쓰리프트 RPC로 비슷한 기능을 하는 쓰리프트 싱크도 있으며 이는 쓰리프트 소소와 쌍을 이룬다.
+    - 아래의 예제에서 두 개의 계층으로 구성된 플룸 설정을 볼 수 있다. 두 개의 에이전트를 각각 agent1과 agent2라는 이름으로 설정 파일에 정의했다. 첫 번째 계층에서 수행되는 agent1에는 파일 채널로 연결된 spooldir 소스와 에이브로 싱크가 있다. 두 번째 계층에서 수행되는 agent2에는 agent1의 에이브로 싱크가 이벤트를 전송하는 포트를 수신하는 에이브로 소스가 있다.
+    - 동일한 컴퓨터에서 두 개의 파일 채널을 실행하기 때문에 서로 다른 데이터와 체크포인트 디렉터리를 사용하도록 설정했다. 이런 방식을 사용하면 두 에이전트는 서로의 파일을 겹쳐 쓰지 않는다.
+        ```
+        # 첫 번째 계층의 에이전트
+        agent1.sources = source1
+        agent1.sinks = sink1
+        agent1.channels = channel1
+        
+        agent1.sources.source1.channels = channel1
+        agent1.sinks.sink1.channel = channel1
+        
+        agent1.sources.source1.type = spooldir
+        agent1.sources.source1.spoolDir = /tmp/spooldir
+        
+        agent1.sinks.sink1.type = avro
+        agent1.sinks.sink1.hostname = localhost
+        agent1.sinks.sink1.port = 10000
+        
+        agent1.channels.channel1.type = file
+        agent1.channels.channel1.checkpointDir = /tmp/agent1/file-channel/checkpoint
+        agent1.channels.channel1.dataDirs = /tmp/agent1/file-channel/data
+        
+        # 두 번째 계층의 에이전트
+        agent2.sources = source2
+        agent2.sinks = sink2
+        agent2.channels = channel2
+        
+        agent2.sources.source2.channels = channel2
+        agent2.sinks.sink2.channel = channel2
+        
+        agent2.sources.source2.type = avro
+        agent2.sources.source2.bind = localhost
+        agent2.sources.source2.port = 10000
+        
+        agent2.sinks.sink2.type = hdfs
+        agent2.sinks.sink2.hdfs.path = /tmp/flume
+        agent2.sinks.sink2.hdfs.filePrefix = events
+        agent2.sinks.sink2.hdfs.fileSuffix = .log
+        agent2.sinks.sink2.hdfs.fileType = DataStream
+        
+        agent2.channels.channel2.type = file
+        agent2.channels.channel2.checkpointDir = /tmp/agent2/file-channel/checkpoint
+        agent2.channels.channel2.dataDirs = /tmp/agent2/file-channel/data
+        ```
+    - 각 에이전트를 동일한 --conf-file 매개변수와 서로 다른 --name 에어전트 매개변수로 각각 실행한다. 먼저 agent1을 실행한다.
+        ```bash
+        % flume-ng agent --conf-file spool-to-hdfs-tiered.properties --name agent1 ...
+        % flume-ng agent --conf-file spool-to-hdfs-tiered.properties --name agent2 ...
+        ```
+    - 전송 보장
+        - 플룸은 일단의 이벤트를 소스에서 채널로, 채널에서 싱크로 전송하는 것을 보장하기 위해 트랜잭션을 사용한다. 에이브로 싱크-소스의 연결 관점에서 보면 트랜잭션은 한 에이전트에서 다음 에이전트로 이벤트를 전달하는 것을 보장한다.
+        - 에이브로 싱크는 agent1의 파일 채널에서 일단의 이벤트를 읽는 작업을 하나의 트랜잭션으로 처리한다. 트랜잭션은 에이브로 싱크가 에이브로 소스의 RPC 종단점까지 쓰기를 완료했다는 통보를 수신했을 때만 커밋된다. 여기서 통보는 일괄 이벤트를 파일 채널에 쓰는 연산을 래핑한 agent2의 트랜잭션이 성공적으로 커밋될 때만 보내진다. 따라서 에이브로 싱크-소스 쌍은 이벤트가 한 플룸 에이전트의 채널에서 다른 플룸 에이전트의 채널로 전송하는 것을 보장한다. (적어도 한번)
+        - 에이전트 중 하나가 동작하지 않는다면 분명히 이벤트는 HDFS로 전달되지 않았을 것이다. 예를 들어 만약 agent1이 중단되면 스풀 디렉터리에 파일이 계속 쌓일 것이다. agent1을 다시 가동하면 파일에 저장된 이벤트를 다시 처리하게 된다. 또한 파일 채널은 지속성 보장을 제공하기 때문에 에이전트가 중단된 시점에 에이전트의 파일 채널에 있는 모든 이벤트는 에이전트를 다시 가동하면 바로 사용할 수 있다.
+        - 만약 agent2가 중단되면 이벤트는 agent2가 다시 가동될 때까지 agent1의 파일 채널에 저장된다. 채널은 용량 제한이 있기 때문에 agent2가 중단된 상태에서 agent1의 채널이 가득 차면 새로운 이벤트는 모두 유실된다. 파일 채널은 기본적으로 백만 건 이상의 이벤트를 복구하지 않도록 설정되어 있다. (capacity 속성으로 변경할 수 있다) 그리고 체크포인트 디렉터리의 디스크 여유 공간이 500MB 밑으로 떨어지면 이벤트를 더 이상 받지 않는다. (minimumRequiredSpace 속성으로 제어)
+        - 두 시나리오 모두 에이전트가 결국은 복구된다는 가정을 하고 있으나 항상 그런 것은 아니다. 만약 agent1을 복구할 수 없다면 그 피해는 agent1 중단 이전에 agent2로 전달하지 못한 agent1의 파일 채널에 있는 이벤트로 제한된다. 여기서 설명한 아키텍쳐를 보면 첫 번째 계층에는 agent1과 같은 에이전트가 여러 개 있다. 따라서 동일한 계층에 있는 다른 노드가 장애가 발생한 노드의 기능을 넘겨받을 수 있다. 예를 들어 특정 노드가 부하 분산된 웹 서버를 실행하고 있다면 장애가 발생한 웹 서버의 트래픽을 다른 노드가 흡수할 수 있고 agent2로 전달할 새로운 플룸 메시지를 생성할 수 있다. 따라서 새로운 이벤트는 유실되지 않는다.
+        - 복구할 수 없는 agent2의 장애는 좀 더 심각한데, 첫 번째 계층 에이전트 채널의 모든 이벤트는 유실될 것이다. 그리고 이런 에이전트가 생성하는 모든 이벤트 역시 전달되지 않을 것이다. 이 문제를 해결하는 방법은 agent1의 싱크 그룹 (sink group)에 여러 개의 중복된 에이브로 싱크를 지정하는 것이다. 이렇게 하면 수신자인 agent2의 에이브로 종단점을 사용할 수 없을 때 그룹의 다른 싱크로 시도할 수 있다.
+10. 싱크 그룹
+    - 싱크 그룹은 여러 개의 싱크를 마치 하나의 싱크처럼 처리하므로 장애 복구나 부하 분산에 활용할 수 있다. 두 번째 계층의 에이전트 중 하나가 작동하지 않아도 중단 없이 이벤트를 다른 두 번째 계층의 에이전트에 전송할 수 있고 이어서 HDFS에 저장할 수 있다.
+    - 싱크 그룹을 설정하려면 에이전트의 sinkgroups 속성을 싱크 그룹의 이름으로 정의한다. 그다음에 싱크 그룹에 속한 싱크의 목록을 작성하고, 싱크 프로세서의 유형과 싱크를 선택하는 정책을 설정한다.
+        ```
+        agent1.source = source1
+        agent1.sinks = sink1a sink1b
+        agent1.sinkgroups = sinkgroup1
+        agent1.channels = channel1
+        
+        agent1.sources.source1.channels = channel1
+        agent1.sinks.sink1a.channel = channel1
+        agent1.sinks.sink1b.channel = channel1
+        
+        agent1.sinkgroups.sinkgroup1.sinks = sink1a sink1b
+        agent1.sinkgroups.sinkgroup1.processor.type = load_balance
+        agent1.sinkgroups.sinkgroup1.processor.backoff = true
+        
+        agent1.source.source1.type = spooldir
+        agent1.source.source1.spoolDir = /tmp/spooldir
+        
+        agent1.sinks.sink1a.type = avro
+        agent1.sinks.sink1a.hostname = localhost
+        agent1.sinks.sink1a.port = 10000
+        
+        agent2.sinks.sink1a.type = avro
+        agent2.sinks.sink1a.hostname = localhost
+        agent2.sinks.sink1a.port = 10001
+        
+        agent1.channels.channel1.type = file
+        ```
+    - 위에서 두 개의 에이브로 싱크로 sink1a와 sink1b를 정의했다. 이 두 에이브로 싱크는 접속하는 에이브로 종단점만 다르다. 또한 싱크 그룹인 sinkgroup1을 정의했고, 싱크로는 sink1a와 sink1b를 지정했다.
+    - 프로세서 유형은 load_balance로 설정했다. load_balance는 라운드-로빈 선택 메커니즘을 사용하여 그룹에 속한 두 개의 싱크에 이벤트를 분배한다. (processor.selector 속성으로 변경할 수 있다.) 한 싱크가 동작하지 않으면 다음 싱크에 다시 시도한다. 모든 싱크가 실패해도 단일 싱크의 사례와 동일하게 이벤트를 채널에서 즉시 제거하지는 않는다. 기본적으로 싱크 프로세서는 불가용 싱크를 기억하고 있지 않으므로 일단의 이벤트를 전송할 때마다 실패한 싱크에도 다시 시도한다. 이런 방식은 비효율적이므로 지수적으로 증가하는 타임아웃 시간 (최대 30초까지 processor.selector.maxTimeOut 속성으로 제어한다) 증가를 막기 위해 실패한 싱크를 블랙 리스트에 포함하도록 processor.backoff를 설정하는 것이 좋다.
+    - 위의 부하 분산 시나리오에 이어 두 번째 계층 에이전트에 대한 설정
+        ```
+        agent2a.sources = source2a
+        agent2a.sinks = sink2a
+        agent2a.channels = channel2a
+        
+        agent2a.sources.source2a.channels = channel2a
+        agent2a.sinks.sink2a.channels = channel2a
+        
+        agent2a.sources.source2a.type = avro
+        agent2a.sources.source2a.bind = localhost
+        agetn2a.sources.source2a.port = 10000
+        
+        agent2a.sinks.sink2a.type = hdfs
+        agent2a.sinks.sink2a.hdfs.path = /tmp/flume
+        agent2a.sinks.sink2a.hdfs.filePrefix = events-a
+        agent2a.sinks.sink2a.hdfs.fileSuffix = .log
+        agent2a.sinks.sink2a.hdfs.fileType = DataStream
+        
+        agent2a.channels.channel2a.type = file
+        ```
+    - agent2b 설정은 HDFS 싱크가 생성하는 파일의 접두사 외에는 에이브로 소스 포트와 동일하다. 파일 접두사는 두 번째 계층의 서로 다른 에이전트가 생성한 HDFS 파일이 충돌하지 않도록 보장하기 위해 사용한다.
+    - 에이전트를 다른 컴퓨터에서 실행하는 일반적인 사례에서는 호스트 인터셉터를 설정하기 위한 유일한 파일 이름을 생성하거나 파일 경로나 접두사에 %{host} 확장 문자를 포함하기 위해 호스트명을 사용한다.
+        ```
+        agent2.sinks.sink2.hdfs.filePrefix = events-%{host}
+        ```
+11. 댜앙한 플룸 컴포넌트 목록
+    | 구분 | 컴포넌트 | 설명 |
+    |:-----------:|:-----------:|:-----------:|
+    |소스|Avro|에이브로 싱크 또는 플룸 SDK가 에이브로 RPC로 전송한 이벤트를 포트에서 수신한다.|
+    ||Exec|유닉스 명령어를 실행하고 표준 출력에서 읽은 행을 이벤트로 변환한다. Exec 소스는 이벤트를 채널까지 전달하는 것을 보장하지 않는다는 것을 주의해야 한다.|
+    ||HTTP|포트에서 수신하고 장착형 핸들러를 사용해서 HTTP 요청을 이벤트로 변환한다.|
+    ||JMS|JMS 큐 또는 토픽에서 메시지를 읽고 해당 메시지를 이벤트로 변환한다.|
+    ||Netcat|포트에서 수신해서 각 텍스트 행을 이벤트로 변환한다.|
+    ||Sequence generator|증가하는 카운터에서 이벤트를 생성한다. 테스트할 때 유용하다.|
+    ||Spooling directory|스풀 디렉터리에 위치한 파일에서 행을 읽어 이벤트로 변환한다.|
+    ||Syslog|syslog에서 행을 읽어 이벤트로 변환한다.|
+    ||Thrift|쓰리프트 싱크 또는 플룸 SDK에 의해 쓰리프트 RPC로 전송된 이벤트를 포트에서 수신한다.|
+    ||Twitter|트위터의 스트리밍 API에 접속하고 트윗을 이벤트로 변환한다.|
+    |싱크|Avro|이벤트를 에이브로 RPC를 통해 에이브로 소스에 전송한다.|
+    ||Elasticsearch|이벤트를 logstash 포맷으로 엘라스틱서치 클러스터에 기록한다.|
+    ||File roll|이벤트를 로컬 파일 시스템에 기록한다.|
+    ||HBase|직렬화기를 선택하여 HBase에 이벤트를 기록한다.|
+    ||HDFS|이벤트를 HDFS에 텍스트, 시퀀스 파일, 에이브로 또는 커스텀 포맷으로 기록한다.|
+    ||IRC|이벤트를 IRC 채널로 전송한다.|
+    ||Logger|SLF4J로 INFO 수준의 이벤트를 기록한다. 테스트할 때 유용하다.|
+    ||Morphline (Solr)|Morphline 명령어 작업 체인을 통해 이벤트를 실행한다. 일반적으로 솔라에 데이터를 로드할 때 사용한다.|
+    ||Null|모든 이벤트를 폐기한다.|
+    ||Thrift|이벤트를 쓰리프트 RPC를 통해 쓰리프트 소스에 보낸다.|
+    |채널|File|이벤트를 로컬 파일시스템의 트랜잭션 로그에 저장한다.|
+    ||JDBC|이벤트를 데이터베이스에 저장한다.|
+    ||Memory|이벤트를 인메모리 큐에 저장한다.|
+    |인터셉터|Host|에이전트의 호스트명이나 주소를 포함하는 host 헤더를 모든 이벤트에 설정한다.|
+    ||Morphline|Morphline 설정 파일로 이벤트를 필터링한다. 조건부로 이벤트를 제거하거나 패턴 매칭 기반으로 헤더를 추가하거나 콘텐트를 추출할 때 유용하다.|
+    ||Regex extractor|지정한 정규표현식을 사용하여 이벤트 본문 텍스트에서 추출한 헤더를 설정한다.|
+    ||Regex filtering|지정한 정규표현식을 이벤트 본문 텍스트에 매칭해서 이벤트를 추가하거나 제외시킨다.|
+    ||Static|모든 이벤트에 고정 헤더와 값을 설정한다.|
+    ||Timestamp|에이전트가 이벤트를 처리할 때 밀리초 단위의 시간을 포함하는 timestamp 헤더를 설정한다.|
+    ||UUID|모든 이벤트에서 유일한 식별자를 포함하는 id 헤더를 설정한다. 나중에 중복을 제거할 때 유용하다.|
